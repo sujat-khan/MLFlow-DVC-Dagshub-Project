@@ -88,18 +88,40 @@ app = Flask(__name__)
 # load model from model registry
 def get_latest_model_version(model_name):
     client = mlflow.MlflowClient()
-    latest_version = client.get_latest_versions(model_name, stages=["Production"])
-    if not latest_version:
-        latest_version = client.get_latest_versions(model_name, stages=["None"])
-    return latest_version[0].version if latest_version else None
+    all_versions = client.search_model_versions(f"name='{model_name}'")
+    for stage in ["Production", "Staging", "None"]:
+        stage_versions = [v for v in all_versions if v.current_stage == stage]
+        if stage_versions:
+            return max(stage_versions, key=lambda v: int(v.version)).version
+    return None
 
 model_name = "my_model"
 model_version = get_latest_model_version(model_name)
 
-model_uri = f'models:/{model_name}/{model_version}'
-model = mlflow.pyfunc.load_model(model_uri)
+model = None
+if model_version:
+    try:
+        model_uri = f'models:/{model_name}/{model_version}'
+        model = mlflow.pyfunc.load_model(model_uri)
+        print(f"Successfully loaded model from DagsHub Model Registry: {model_uri}")
+    except Exception as e:
+        print(f"Could not load model version {model_version} from DagsHub ({e}).")
+        print("Falling back to local models/model.pkl...")
 
-vectorizer = pickle.load(open('models/vectorizer.pkl','rb'))
+if model is None:
+    local_model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'model.pkl')
+    if not os.path.exists(local_model_path):
+        local_model_path = 'models/model.pkl'
+    with open(local_model_path, 'rb') as f:
+        model = pickle.load(f)
+    print("Successfully loaded local models/model.pkl")
+
+# Load vectorizer safely from project models/
+vectorizer_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'vectorizer.pkl')
+if not os.path.exists(vectorizer_path):
+    vectorizer_path = 'models/vectorizer.pkl'
+with open(vectorizer_path, 'rb') as f:
+    vectorizer = pickle.load(f)
 
 @app.route('/')
 def home():
@@ -116,15 +138,17 @@ def predict():
     # bow
     features = vectorizer.transform([text])
 
-    # Convert sparse matrix to DataFrame
-    features_df = pd.DataFrame.sparse.from_spmatrix(features)
-    features_df = pd.DataFrame(features.toarray(), columns=[str(i) for i in range(features.shape[1])])
-
     # prediction
-    result = model.predict(features_df)
+    if hasattr(model, 'predict_proba'):
+        # Raw sklearn model
+        result = model.predict(features)
+    else:
+        # MLflow pyfunc model needs DataFrame input
+        features_df = pd.DataFrame(features.toarray(), columns=[str(i) for i in range(features.shape[1])])
+        result = model.predict(features_df)
 
     # show
-    return render_template('index.html', result=result[0])
+    return render_template('index.html', result=int(result[0]))
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
