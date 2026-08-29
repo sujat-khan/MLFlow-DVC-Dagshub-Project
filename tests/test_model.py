@@ -19,8 +19,6 @@ class TestModelLoading(unittest.TestCase):
         os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
         os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
-        
-
         dagshub_url = "https://dagshub.com"
         repo_owner = "sujat-khan"
         repo_name = "MLFlow-DVC-Dagshub-Project"
@@ -30,8 +28,7 @@ class TestModelLoading(unittest.TestCase):
 
         # Load the new model from MLflow model registry
         cls.new_model_name = "my_model"
-        cls.new_model_version = cls.get_latest_model_version(cls.new_model_name)
-        cls.new_model_uri = f'models:/{cls.new_model_name}/{cls.new_model_version}'
+        cls.new_model_version, cls.new_model_uri = cls.get_latest_model_version_and_uri(cls.new_model_name)
         cls.new_model = mlflow.pyfunc.load_model(cls.new_model_uri)
 
         # Load the vectorizer
@@ -41,12 +38,30 @@ class TestModelLoading(unittest.TestCase):
         cls.holdout_data = pd.read_csv('data/processed/test_bow.csv')
 
     @staticmethod
-    def get_latest_model_version(model_name, stage="Staging"):
+    def get_latest_model_version_and_uri(model_name, stage="Staging"):
+        """Get latest model version and its runs:/ source URI.
+        
+        Uses search_model_versions (replacing deprecated get_latest_versions)
+        and returns the runs:/ URI instead of models:/ URI to avoid DagsHub
+        artifact proxy issues.
+        """
         client = mlflow.MlflowClient()
-        latest_versions = client.get_latest_versions(model_name, stages=[stage])
-        if not latest_versions:
-            return None
-        return max(latest_versions, key=lambda v: int(v.version)).version
+
+        # Use search_model_versions instead of deprecated get_latest_versions
+        all_versions = client.search_model_versions(f"name='{model_name}'")
+        stage_versions = [v for v in all_versions if v.current_stage == stage]
+
+        if not stage_versions:
+            raise ValueError(f"No model versions found in stage '{stage}' for model '{model_name}'")
+
+        latest = max(stage_versions, key=lambda v: int(v.version))
+
+        # Build the runs:/ URI from the version's run_id and artifact path
+        # This avoids the models:/ scheme which goes through the registry
+        # artifact proxy that may return empty artifacts on DagsHub
+        model_uri = f"runs:/{latest.run_id}/{latest.source.split('/artifacts/')[-1]}" if '/artifacts/' in latest.source else latest.source
+
+        return latest.version, model_uri
 
     def test_model_loaded_properly(self):
         self.assertIsNotNone(self.new_model)

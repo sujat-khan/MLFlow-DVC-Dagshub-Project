@@ -23,7 +23,8 @@ def promote_model():
 
     model_name = "my_model"
     # Get the latest version in staging (highest version number)
-    staging_versions = client.get_latest_versions(model_name, stages=["Staging"])
+    all_versions = client.search_model_versions(f"name='{model_name}'")
+    staging_versions = [v for v in all_versions if v.current_stage == "Staging"]
     if not staging_versions:
         raise ValueError(f"No model versions found in stage 'Staging' for model '{model_name}'")
     latest_version_staging = max(staging_versions, key=lambda v: int(v.version)).version
