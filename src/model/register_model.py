@@ -49,20 +49,49 @@ def load_model_info(file_path: str) -> dict:
 def register_model(model_name: str, model_info: dict):
     """Register the model to the MLflow Model Registry."""
     try:
-        model_uri = f"runs:/{model_info['run_id']}/{model_info['model_path']}"
+        client = mlflow.tracking.MlflowClient()
+        run_id = model_info['run_id']
+        model_path = model_info['model_path']
+        model_uri = f"runs:/{run_id}/{model_path}"
         
-        # Register the model
-        model_version = mlflow.register_model(model_uri, model_name)
+        version = None
+        try:
+            model_version = mlflow.register_model(model_uri, model_name)
+            version = model_version.version
+        except Exception as reg_err:
+            logger.warning('mlflow.register_model fallback triggered: %s', reg_err)
+            run = client.get_run(run_id)
+            artifact_uri = run.info.artifact_uri
+            source = f"{artifact_uri}/{model_path}"
+            
+            try:
+                client.create_registered_model(model_name)
+            except Exception:
+                pass
+            
+            # Check if version for this run already exists
+            existing_versions = client.search_model_versions(f"name='{model_name}'")
+            for v in existing_versions:
+                if v.run_id == run_id:
+                    version = v.version
+                    break
+            
+            if not version:
+                created = client.create_model_version(
+                    name=model_name,
+                    source=source,
+                    run_id=run_id
+                )
+                version = created.version
         
         # Transition the model to "Staging" stage
-        client = mlflow.tracking.MlflowClient()
         client.transition_model_version_stage(
             name=model_name,
-            version=model_version.version,
+            version=version,
             stage="Staging"
         )
         
-        logger.debug(f'Model {model_name} version {model_version.version} registered and transitioned to Staging.')
+        logger.debug(f'Model {model_name} version {version} registered and transitioned to Staging.')
     except Exception as e:
         logger.error('Error during model registration: %s', e)
         raise
@@ -77,6 +106,7 @@ def main():
     except Exception as e:
         logger.error('Failed to complete the model registration process: %s', e)
         print(f"Error: {e}")
+        raise
 
 if __name__ == '__main__':
     main()
