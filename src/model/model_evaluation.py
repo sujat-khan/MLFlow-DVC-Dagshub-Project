@@ -145,8 +145,12 @@ def main():
                 for param_name, param_value in params.items():
                     mlflow.log_param(param_name, param_value)
             
-            # Log model to MLflow
-            mlflow.sklearn.log_model(clf, "model", serialization_format="cloudpickle")
+            # Infer and log model signature
+            from mlflow.models.signature import infer_signature
+            signature = infer_signature(X_test, clf.predict(X_test))
+            
+            # Log model to MLflow with signature
+            mlflow.sklearn.log_model(clf, "model", signature=signature, serialization_format="cloudpickle")
             
             # Save model info
             save_model_info(run.info.run_id, "model", 'reports/experiment_info.json')

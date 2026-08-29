@@ -98,11 +98,12 @@ def register_model(model_name: str, model_info: dict):
                 )
                 version = created.version
         
-        # Transition the model to "Staging" stage
+        # Transition the model to "Staging" stage and archive older staging versions
         client.transition_model_version_stage(
             name=model_name,
             version=version,
-            stage="Staging"
+            stage="Staging",
+            archive_existing_versions=True
         )
         
         logger.debug(f'Model {model_name} version {version} registered and transitioned to Staging.')
