@@ -169,3 +169,8 @@ dvc metrics diff
 4. **Automated Model Registry Flow:**
    * `model_evaluation.py` outputs run metadata to `reports/experiment_info.json`.
    * `register_model.py` reads the active run ID, registers `my_model` on DagsHub, and automatically transitions the version stage to **Staging**.
+
+---
+
+
+[References](https://github.com/campusx-official/mlops-mini-project/tree/master)
