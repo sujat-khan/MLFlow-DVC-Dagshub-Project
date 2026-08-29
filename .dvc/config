@@ -1,4 +1,4 @@
 [core]
     remote = myremote
 ['remote "myremote"']
-    url = C:\Users\sujat\AppData\Local\Temp
+    url = s3://mlflow-sk-007
