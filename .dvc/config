@@ -2,3 +2,4 @@
     remote = myremote
 ['remote "myremote"']
     url = s3://mlflow-sk-007
+    region = ap-south-1
