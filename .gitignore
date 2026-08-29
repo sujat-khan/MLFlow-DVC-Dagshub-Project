@@ -1,0 +1,131 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Virtual Environments
+myvenv/
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports / Type checking
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Logs & Databases
+*.log
+*.sqlite3
+*.db
+*.rdb
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# DotEnv & Secrets
+.env
+.env.*
+!.env.example
+
+# MLflow
+mlruns/
+mlartifacts/
+.trash/
+
+# DVC (Data Version Control)
+.dvc/cache/
+.dvc/tmp/
+.dvc/config.local
+.dvc/plots/
+
+# DagsHub
+.dagshub/
+
+# Data & Models (let DVC track datasets/models while keeping folders & .dvc files in git)
+/data/*
+!/data/raw/
+!/data/processed/
+!/data/interim/
+!/data/external/
+!/data/**/.gitkeep
+!/data/**/*.dvc
+
+/models/*
+!/models/.gitkeep
+!/models/**/*.dvc
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.spyproject/
+.spyderproject/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
