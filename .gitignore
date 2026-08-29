@@ -91,24 +91,17 @@ mlartifacts/
 # DagsHub
 .dagshub/
 
-# Data & Models (let DVC track datasets/models while keeping folders & .dvc files in git)
-/data/*
-!/data/raw/
-!/data/processed/
-!/data/interim/
-!/data/external/
-!/data/**/.gitkeep
-!/data/**/*.dvc
-
-/models/*
-!/models/.gitkeep
-!/models/**/*.dvc
-*.pkl
-*.joblib
-*.h5
-*.pt
-*.pth
-*.onnx
+# Data & Models (DVC pipeline outputs - ignored by Git)
+/data/raw
+/data/interim
+/data/processed
+/models/*.pkl
+/models/*.joblib
+/models/*.h5
+/models/*.pt
+/models/*.pth
+/models/*.onnx
+reports/experiment_info.json
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
