@@ -1,0 +1,38 @@
+# manual
+
+create an ec2 instance
+
+sudo apt-get update
+
+sudo apt-get install -y docker.io
+
+sudo systemctl start docker
+
+sudo systemctl enable docker
+
+sudo docker pull shuman24/mlflow-dag-1
+
+sudo docker run -p 80:5000 -e DAGSHUB_PAT=7a72b99c10f83dfadf2bd26b50175834f8dbed4e shuman24/mlflow-dag-1
+
+AWS security group
+
+
+-- Steps below for deployment using CI.yaml file
+sudo usermod -aG docker $USER
+
+exit
+
+
+
+docker ps (new connection)
+
+add secrets to GitHub
+    - EC2_HOST
+    - EC2_USER
+    - EC2_SSH_KEY
+
+modify ci.yaml
+
+push
+
+AWS security group
