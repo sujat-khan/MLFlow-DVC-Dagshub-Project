@@ -36,3 +36,41 @@ modify ci.yaml
 push
 
 AWS security group
+
+=====================================
+others
+
+docker run -d -p 8888:5000 -e DAGSHUB_PAT=7a72b99c10f83dfadf2bd26b50175834f8dbed4e --name sk-run 114757334131.dkr.ecr.ap-south-1.amazonaws.com/sk-learn-ecr:V1
+
+======Docker hub CI Part
+- name: Log in to Docker Hub
+        if: success()
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Build Docker image
+        if: success()
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/mlflow-dag-1:latest .
+      - name: Push Docker image to Docker Hub
+        if: success()
+        run: |
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/mlflow-dag-1:latest
+
+      - name: Deploy to EC2
+        if: success()
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/mlflow-dag-1:latest
+            docker stop my-app || true
+            docker rm my-app || true
+            docker run -d -p 80:5000 --name my-app \
+              -e DAGSHUB_PAT=${{ secrets.DAGSHUB_PAT }} \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/mlflow-dag-1:latest
+
+=====================================
